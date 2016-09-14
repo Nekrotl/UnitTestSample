@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import com.sample.model.State;
 import com.sample.service.StateService;
 
-@Service("stateServiceTest")
+@Service("stateService")
 public class StateServiceImpl implements StateService {
 
 	@Override
@@ -20,6 +20,8 @@ public class StateServiceImpl implements StateService {
 		states.add(state2);
 		State state3 = new State(3, "Baja California Sur");
 		states.add(state3);
+		State state4 = new State(4, "Campeche");
+		states.add(state4);
 		return states;
 	}
 

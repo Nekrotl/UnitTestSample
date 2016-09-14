@@ -3,6 +3,7 @@ package com.sample.web;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -22,6 +23,11 @@ public class StateController {
 	public List<State> getStates() {
 		return stateService.findAll();
 	}
-  
-
+    
+    @RequestMapping(value = "/getStateById/{id}", method = RequestMethod.GET)
+	@ResponseBody
+	public State getStateById(@PathVariable("id") int id) {
+		return stateService.findById(id);
+	}
+    
 }

@@ -12,36 +12,34 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import com.sample.service.StateService;
 import com.sample.stub.StateServiceImpl;
 
-@Configuration
-@ComponentScan(basePackages = {"com.sample.stub"})
-class TestApplicationContext {
-	@Bean
-    public StateService stateleService() {
-        return new StateServiceImpl(); 
-    }
-}
-
-
-//@RunWith(SpringJUnit4ClassRunner.class)
-@RunWith(MockitoJUnitRunner.class)
-@ContextConfiguration(classes = {TestApplicationContext.class})
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration
+@WebAppConfiguration
 public class StateControllerTest {
-	
+
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(StateControllerTest.class);
+
+	private MockMvc mockMvc;
+
+	@Autowired
+	private WebApplicationContext ctx;
 
 	@Mock
 	private StateService stateService;
@@ -49,14 +47,10 @@ public class StateControllerTest {
 	@InjectMocks
 	private StateController stateController;
 
-	private MockMvc mockMvc;
-
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
-		this.mockMvc = MockMvcBuilders.standaloneSetup(stateController).build();
-		logger.info("########## " + stateService.findAll());
-
+		this.mockMvc = MockMvcBuilders.webAppContextSetup(ctx).build();
 	}
 
 	@Test
@@ -66,20 +60,38 @@ public class StateControllerTest {
 
 	@Test
 	public void getStates() throws Exception {
-		mockMvc
-			.perform(MockMvcRequestBuilders
-				.get("/getStates")
-				.accept(MediaType.APPLICATION_JSON))
+		mockMvc.perform(MockMvcRequestBuilders.get("/getStates").accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk()).andDo(print());
-	}	
+	}
+
+	@Test
+	public void validateStatesSizeList() throws Exception {
+		mockMvc.perform(MockMvcRequestBuilders.get("/getStates").accept(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$", hasSize(4))).andDo(print());
+	}
+
+	@Test
+	public void validateStateById() throws Exception {
+		 mockMvc.perform(MockMvcRequestBuilders.get("/getStateById/1").accept(MediaType.APPLICATION_JSON))
+		.andExpect(jsonPath("$.id").value(1))
+		.andExpect(jsonPath("$.name").value("Aguascalientes"))
+		.andExpect(jsonPath("$.id").exists()).andDo(print());
+	}
 	
-	 @Test
-	 public void validateStatesSizeList() throws Exception {
-		 mockMvc.perform(MockMvcRequestBuilders
-		 .get("/getStates")
-		 .accept(MediaType.APPLICATION_JSON))
-		 .andExpect(jsonPath("$", hasSize(3)))
-		 .andDo(print());
-	 }
+	@Configuration
+	@EnableWebMvc
+	public static class TestConfiguration {
+
+		@Bean
+		public StateController stateController() {
+			return new StateController();
+		}
+
+		@Bean
+		public StateService stateService() {
+			return new StateServiceImpl();
+		}
+
+	}
 
 }
